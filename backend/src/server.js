@@ -56,6 +56,16 @@ app.use('/api/commissions', commissionRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api', systemRoutes); // Mount system endpoints at /api directly for dashboards
 
+// Root path confirmation route
+app.get('/', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Welcome to the Volvoro Tour Explorer CRM API Service.', 
+    version: '1.0.0',
+    health: `${req.protocol}://${req.get('host')}/api/health` 
+  });
+});
+
 // Base API status endpoint
 app.get('/api/health', (req, res) => {
   res.json({ success: true, status: 'healthy', timestamp: new Date() });
