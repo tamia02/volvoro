@@ -124,9 +124,69 @@ const changePassword = async (req, res) => {
   }
 };
 
+const register = async (req, res) => {
+  const { name, mobile, email, password, role } = req.body;
+
+  if (!name || !mobile || !email || !password || !role) {
+    return res.status(400).json({ success: false, message: 'All fields are required' });
+  }
+
+  // Validate role
+  const validRoles = ['admin', 'sales_exec', 'finance', 'operations', 'marketing'];
+  if (!validRoles.includes(role)) {
+    return res.status(400).json({ success: false, message: 'Invalid role selected' });
+  }
+
+  try {
+    // Check if user already exists (by email or mobile)
+    const existingUser = await User.findOne({
+      where: {
+        [User.sequelize.Op.or]: [
+          { email },
+          { mobile }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'A user with this email or mobile already exists' });
+    }
+
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    const newUser = await User.create({
+      name,
+      mobile,
+      email,
+      password_hash: passwordHash,
+      role,
+      status: 'active',
+      joining_date: new Date().toISOString().split('T')[0]
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Account created successfully. You can now log in.',
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        mobile: newUser.mobile,
+        role: newUser.role,
+        status: newUser.status,
+      }
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    return res.status(500).json({ success: false, message: 'Server registration error' });
+  }
+};
+
 module.exports = {
   login,
   logout,
   getMe,
   changePassword,
+  register,
 };
