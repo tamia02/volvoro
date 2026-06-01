@@ -30,6 +30,7 @@ const Payouts = () => {
 
   // Log Form State
   const [formType, setFormType] = useState('salary');
+  const [formStatus, setFormStatus] = useState('unpaid');
   // Salary Payout Form fields
   const [salMonth, setSalMonth] = useState('');
   const [salEmployeeId, setSalEmployeeId] = useState('');
@@ -146,7 +147,17 @@ const Payouts = () => {
   const handleLogPayoutSubmit = async (e) => {
     e.preventDefault();
     try {
-      let payload = { payout_type: formType };
+      let payload = { 
+        payout_type: formType,
+        status: formStatus
+      };
+
+      if (['paid', 'received'].includes(formStatus)) {
+        payload.verified_date = verifiedDate;
+        payload.payment_mode = paymentMode;
+        payload.transaction_id = transactionId;
+      }
+
       if (formType === 'salary') {
         payload = {
           ...payload,
@@ -197,6 +208,10 @@ const Payouts = () => {
   };
 
   const resetForm = () => {
+    setFormStatus('unpaid');
+    setVerifiedDate(new Date().toISOString().split('T')[0]);
+    setPaymentMode('Bank Transfer');
+    setTransactionId('');
     setSalMonth('');
     setSalEmployeeId('');
     setSalAmount('');
@@ -307,26 +322,18 @@ const Payouts = () => {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800">
-        <button
-          onClick={() => { setActiveTab('salary'); setStatusFilter(''); }}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 transition-all ${activeTab === 'salary' ? 'border-brand-500 text-brand-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+      {/* Dropdown Selector */}
+      <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-slate-200/15 max-w-md">
+        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Category:</label>
+        <select
+          value={activeTab}
+          onChange={(e) => { setActiveTab(e.target.value); setStatusFilter(''); }}
+          className="glass-input py-2 px-4 text-xs font-semibold bg-transparent border-none focus:ring-0 text-brand-600 dark:text-violet-400 cursor-pointer"
         >
-          Salary Payouts
-        </button>
-        <button
-          onClick={() => { setActiveTab('commission'); setStatusFilter(''); }}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 transition-all ${activeTab === 'commission' ? 'border-brand-500 text-brand-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
-        >
-          Commission Payouts
-        </button>
-        <button
-          onClick={() => { setActiveTab('vendor_payment'); setStatusFilter(''); }}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 transition-all ${activeTab === 'vendor_payment' ? 'border-brand-500 text-brand-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
-        >
-          Vendor Payments
-        </button>
+          <option value="salary" className="bg-brand-950 text-white">Salary</option>
+          <option value="commission" className="bg-brand-950 text-white">Commission Only</option>
+          <option value="vendor_payment" className="bg-brand-950 text-white">Vendor Payment</option>
+        </select>
       </div>
 
       {/* Filter panel */}
@@ -427,9 +434,9 @@ const Payouts = () => {
               onChange={(e) => { setFormType(e.target.value); resetForm(); }}
               className="w-full glass-input"
             >
-              <option value="salary">Salary Form</option>
-              <option value="commission">Commission Form</option>
-              <option value="vendor_payment">Vendor Payment Form</option>
+              <option value="salary">Salary</option>
+              <option value="commission">Commission Only</option>
+              <option value="vendor_payment">Vendor Payment</option>
             </select>
           </div>
 
@@ -456,9 +463,23 @@ const Payouts = () => {
                 >
                   <option value="">Select Employee</option>
                   {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.role.replace('_', ' ')})</option>
+                    <option key={emp.id} value={emp.id}>{emp.name}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Role</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={
+                    salEmployeeId 
+                      ? (employees.find(e => e.id === salEmployeeId)?.role || '').replace('_', ' ').toUpperCase()
+                      : ''
+                  }
+                  placeholder="Employee role will auto-populate"
+                  className="w-full glass-input bg-slate-100/50 dark:bg-surface-800/50 cursor-not-allowed font-bold text-slate-500"
+                />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
@@ -703,8 +724,66 @@ const Payouts = () => {
             </>
           )}
 
+          <div>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2 font-bold">Payout Status</label>
+            <select
+              value={formStatus}
+              onChange={(e) => setFormStatus(e.target.value)}
+              className="w-full glass-input"
+            >
+              <option value="unpaid">Unpaid / Unsettled</option>
+              <option value="pending">Pending Verification</option>
+              <option value="paid">Paid</option>
+              {formType === 'vendor_payment' && <option value="received">Received</option>}
+              <option value="rejected">Rejected</option>
+              <option value="hold">On Hold</option>
+            </select>
+          </div>
+
+          {['paid', 'received'].includes(formStatus) && (
+            <div className="border-t border-slate-200/40 dark:border-slate-800/40 pt-4 space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-500">
+                Payment Verification Details
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Payment Date</label>
+                  <input
+                    type="date"
+                    value={verifiedDate}
+                    onChange={(e) => setVerifiedDate(e.target.value)}
+                    className="w-full glass-input"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Payment Mode</label>
+                  <select
+                    value={paymentMode}
+                    onChange={(e) => setPaymentMode(e.target.value)}
+                    className="w-full glass-input"
+                  >
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="UPI / GPay">UPI / GPay</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card Payment</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Transaction ID / Reference (UTR)</label>
+                <input
+                  type="text"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  className="w-full glass-input"
+                  placeholder="e.g. UTR128738219"
+                />
+              </div>
+            </div>
+          )}
+
           <button type="submit" className="w-full btn-primary font-bold py-3 mt-4">
-            Save Payout Request
+            Save Payout Transaction
           </button>
         </form>
       </Modal>

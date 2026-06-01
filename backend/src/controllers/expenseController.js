@@ -147,18 +147,25 @@ const createExpense = async (req, res) => {
 
 const getExpenseSummary = async (req, res) => {
   try {
+    const { Payout } = require('../models');
+
     const expenses = await Expense.findAll();
+    const payouts = await Payout.findAll({
+      where: {
+        status: ['paid', 'received']
+      }
+    });
 
     const summary = {
       total: 0,
       by_type: {
         meta_ads: 0,
-        staff: 0,
-        commission: 0,
-        vendor_payment: 0,
-        refund: 0,
         software: 0,
-        misc: 0
+        refund: 0,
+        misc: 0,
+        salary: 0,
+        commission: 0,
+        vendor_payment: 0
       }
     };
 
@@ -167,8 +174,26 @@ const getExpenseSummary = async (req, res) => {
       summary.total += amt;
       if (summary.by_type[e.expense_type] !== undefined) {
         summary.by_type[e.expense_type] += amt;
-      } else {
-        summary.by_type[e.expense_type] = amt;
+      }
+    });
+
+    payouts.forEach(p => {
+      let amt = 0;
+      if (p.payout_type === 'salary') {
+        amt = parseFloat(p.final_amount || 0);
+      } else if (p.payout_type === 'commission') {
+        amt = parseFloat(p.commission_amount || 0);
+      } else if (p.payout_type === 'vendor_payment') {
+        amt = parseFloat(p.amount_paid || 0);
+      }
+
+      if (p.verified_amount !== null && p.verified_amount !== undefined) {
+        amt = parseFloat(p.verified_amount);
+      }
+
+      summary.total += amt;
+      if (summary.by_type[p.payout_type] !== undefined) {
+        summary.by_type[p.payout_type] += amt;
       }
     });
 

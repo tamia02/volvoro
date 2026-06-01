@@ -84,7 +84,7 @@ const createUser = async (req, res) => {
     const newUser = await User.create({
       name,
       mobile,
-      email,
+      email: email || null,
       password_hash: passwordHash,
       role,
       status: 'active',
@@ -158,12 +158,15 @@ const updateUser = async (req, res) => {
       user.mobile = mobile;
     }
 
-    if (email && email !== user.email) {
-      const existingEmail = await User.findOne({ where: { email } });
-      if (existingEmail) {
-        return res.status(400).json({ success: false, message: 'Email is already registered' });
+    if (email !== undefined) {
+      const targetEmail = email || null;
+      if (targetEmail && targetEmail !== user.email) {
+        const existingEmail = await User.findOne({ where: { email: targetEmail } });
+        if (existingEmail) {
+          return res.status(400).json({ success: false, message: 'Email is already registered' });
+        }
       }
-      user.email = email;
+      user.email = targetEmail;
     }
 
     if (name) user.name = name;

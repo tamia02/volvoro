@@ -89,7 +89,28 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
 
-    // sync tables without resetting records (alter: true adjusts existing columns)
+    // sync tables without resetting records
+    console.log('Running schema migrations...');
+    const migrations = [
+      'ALTER TABLE `users` ADD COLUMN `address` TEXT;',
+      "ALTER TABLE `users` ADD COLUMN `payout_type` VARCHAR(30) DEFAULT 'Salary';",
+      'ALTER TABLE `users` ADD COLUMN `salary_amount` DECIMAL(12,2);',
+      'ALTER TABLE `users` ADD COLUMN `commission_percentage` DECIMAL(5,2);',
+      'ALTER TABLE `vendors` ADD COLUMN `company_name` VARCHAR(100);',
+      'ALTER TABLE `vendors` ADD COLUMN `mobile_number` VARCHAR(20);',
+      'ALTER TABLE `vendors` ADD COLUMN `whatsapp_number` VARCHAR(20);',
+      'ALTER TABLE `vendors` ADD COLUMN `email` VARCHAR(100);',
+      'ALTER TABLE `vendors` ADD COLUMN `address` TEXT;',
+      "ALTER TABLE `vendors` ADD COLUMN `destinations` TEXT DEFAULT '[]';"
+    ];
+    for (const q of migrations) {
+      try {
+        await sequelize.query(q);
+      } catch (err) {
+        // Silence duplicate column errors
+      }
+    }
+
     await sequelize.sync({ alter: false });
     console.log('Database tables verified.');
 

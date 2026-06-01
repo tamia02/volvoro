@@ -137,12 +137,12 @@ const updateVendor = async (req, res) => {
     const oldVendorValues = vendor.toJSON();
 
     if (name) vendor.name = name;
-    if (company_name !== undefined) vendor.company_name = company_name;
-    if (mobile_number !== undefined) vendor.mobile_number = mobile_number;
-    if (whatsapp_number !== undefined) vendor.whatsapp_number = whatsapp_number;
-    if (email !== undefined) vendor.email = email;
-    if (address !== undefined) vendor.address = address;
-    if (destinations !== undefined) vendor.destinations = destinations;
+    if (company_name !== undefined) vendor.company_name = company_name || null;
+    if (mobile_number !== undefined) vendor.mobile_number = mobile_number || null;
+    if (whatsapp_number !== undefined) vendor.whatsapp_number = whatsapp_number || null;
+    if (email !== undefined) vendor.email = email || null;
+    if (address !== undefined) vendor.address = address || null;
+    if (destinations !== undefined) vendor.destinations = destinations || '[]';
 
     if (contact !== undefined) vendor.contact = contact;
     if (destination !== undefined) vendor.destination = destination;

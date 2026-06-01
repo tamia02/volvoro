@@ -30,6 +30,11 @@ const getAllPayouts = async (req, res) => {
 const createPayout = async (req, res) => {
   const {
     payout_type,
+    status,
+    verified_amount,
+    verified_date,
+    payment_mode,
+    transaction_id,
     // Salary fields
     month,
     employee_id,
@@ -62,8 +67,15 @@ const createPayout = async (req, res) => {
   try {
     let payoutData = {
       payout_type,
-      status: 'unpaid',
+      status: status || 'unpaid',
     };
+
+    if (['paid', 'received'].includes(payoutData.status)) {
+      payoutData.verified_date = verified_date || new Date().toISOString().split('T')[0];
+      payoutData.payment_mode = payment_mode || 'Bank Transfer';
+      payoutData.transaction_id = transaction_id || '';
+      payoutData.verified_by = req.user.id;
+    }
 
     if (payout_type === 'salary') {
       if (!month || !employee_id) {
@@ -83,6 +95,10 @@ const createPayout = async (req, res) => {
         deduction_amount: ded,
         final_amount: finalAmt
       };
+
+      if (['paid', 'received'].includes(payoutData.status)) {
+        payoutData.verified_amount = verified_amount !== undefined ? parseFloat(verified_amount) : finalAmt;
+      }
     } else if (payout_type === 'commission') {
       if (!employee_id) {
         return res.status(400).json({ success: false, message: 'Employee ID is required for Commission payouts' });
@@ -103,6 +119,10 @@ const createPayout = async (req, res) => {
         commission_percentage: pct,
         commission_amount: commAmt
       };
+
+      if (['paid', 'received'].includes(payoutData.status)) {
+        payoutData.verified_amount = verified_amount !== undefined ? parseFloat(verified_amount) : commAmt;
+      }
     } else if (payout_type === 'vendor_payment') {
       if (!vendor_id) {
         return res.status(400).json({ success: false, message: 'Vendor ID is required for Vendor payments' });
@@ -127,6 +147,10 @@ const createPayout = async (req, res) => {
         remaining_amount: rem,
         profit_amount: prof
       };
+
+      if (['paid', 'received'].includes(payoutData.status)) {
+        payoutData.verified_amount = verified_amount !== undefined ? parseFloat(verified_amount) : paid;
+      }
     } else {
       return res.status(400).json({ success: false, message: 'Invalid payout type' });
     }
