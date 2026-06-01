@@ -11,6 +11,31 @@ const Vendor = sequelize.define('Vendor', {
     type: DataTypes.STRING(100),
     allowNull: false,
   },
+  company_name: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  mobile_number: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+  },
+  whatsapp_number: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+  },
+  email: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  address: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  destinations: {
+    type: DataTypes.TEXT, // Will store JSON array of strings
+    allowNull: true,
+    defaultValue: '[]',
+  },
   contact: {
     type: DataTypes.STRING(15),
     allowNull: true,

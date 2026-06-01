@@ -1,10 +1,24 @@
 const bcrypt = require('bcrypt');
+const { Op } = require('sequelize');
 const { User } = require('../models');
 const { logActivity } = require('../utils/activityLogger');
 
 const getAllUsers = async (req, res) => {
   try {
+    const { search } = req.query;
+    const filter = {};
+
+    if (search) {
+      filter[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { mobile: { [Op.like]: `%${search}%` } },
+        { email: { [Op.like]: `%${search}%` } },
+        { role: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
     const users = await User.findAll({
+      where: filter,
       attributes: { exclude: ['password_hash'] },
       order: [['createdAt', 'DESC']],
     });
@@ -33,7 +47,18 @@ const getUserById = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-  const { name, mobile, email, password, role, joining_date } = req.body;
+  const {
+    name,
+    mobile,
+    email,
+    password,
+    role,
+    joining_date,
+    address,
+    payout_type,
+    salary_amount,
+    commission_percentage
+  } = req.body;
 
   if (!name || !mobile || !password || !role) {
     return res.status(400).json({ success: false, message: 'Name, mobile, password, and role are required' });
@@ -65,6 +90,10 @@ const createUser = async (req, res) => {
       status: 'active',
       joining_date: joining_date || new Date().toISOString().split('T')[0],
       created_by: req.user.id,
+      address: address || null,
+      payout_type: payout_type || 'Salary',
+      salary_amount: salary_amount || null,
+      commission_percentage: commission_percentage || null,
     });
 
     // Strip password from response
@@ -89,7 +118,18 @@ const createUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-  const { name, mobile, email, role, joining_date, password } = req.body;
+  const {
+    name,
+    mobile,
+    email,
+    role,
+    joining_date,
+    password,
+    address,
+    payout_type,
+    salary_amount,
+    commission_percentage
+  } = req.body;
 
   try {
     const user = await User.findByPk(req.params.id);
@@ -103,6 +143,10 @@ const updateUser = async (req, res) => {
       email: user.email,
       role: user.role,
       joining_date: user.joining_date,
+      address: user.address,
+      payout_type: user.payout_type,
+      salary_amount: user.salary_amount,
+      commission_percentage: user.commission_percentage,
     };
 
     // Check unique constraints if mobile or email changed
@@ -125,6 +169,10 @@ const updateUser = async (req, res) => {
     if (name) user.name = name;
     if (role) user.role = role;
     if (joining_date) user.joining_date = joining_date;
+    if (address !== undefined) user.address = address;
+    if (payout_type !== undefined) user.payout_type = payout_type;
+    if (salary_amount !== undefined) user.salary_amount = salary_amount;
+    if (commission_percentage !== undefined) user.commission_percentage = commission_percentage;
 
     if (password) {
       const saltRounds = 12;
@@ -142,7 +190,17 @@ const updateUser = async (req, res) => {
       entityType: 'User',
       entityId: user.id,
       oldValue: oldValues,
-      newValue: { name: user.name, email: user.email, mobile: user.mobile, role: user.role, joining_date: user.joining_date },
+      newValue: {
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+        role: user.role,
+        joining_date: user.joining_date,
+        address: user.address,
+        payout_type: user.payout_type,
+        salary_amount: user.salary_amount,
+        commission_percentage: user.commission_percentage
+      },
       performedBy: req.user.id,
       roleAtTime: req.user.role,
     });
@@ -194,10 +252,43 @@ const toggleUserStatus = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.id === req.user.id) {
+      return res.status(400).json({ success: false, message: 'You cannot delete your own profile' });
+    }
+
+    const oldStatus = user.status;
+    user.status = 'inactive';
+    await user.save();
+
+    await logActivity({
+      action: 'USER_DELETED',
+      entityType: 'User',
+      entityId: user.id,
+      oldValue: { status: oldStatus },
+      newValue: { status: 'inactive' },
+      performedBy: req.user.id,
+      roleAtTime: req.user.role,
+    });
+
+    return res.json({ success: true, message: 'Employee profile deleted successfully' });
+  } catch (error) {
+    console.error('DeleteUser error:', error);
+    return res.status(500).json({ success: false, message: 'Server error deleting employee' });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
   createUser,
   updateUser,
   toggleUserStatus,
+  deleteUser,
 };

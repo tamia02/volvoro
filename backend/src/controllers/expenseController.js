@@ -17,7 +17,7 @@ const getAllExpenses = async (req, res) => {
     const expenses = await Expense.findAll({
       where: filter,
       include: [
-        { model: User, as: 'addedByUser', attributes: ['id', 'name'], association: new User.hasMany(Expense, { foreignKey: 'added_by', as: 'expensesAdded' }).association }
+        { model: User, as: 'addedByUser', attributes: ['id', 'name'] }
       ],
       order: [['expense_date', 'DESC']]
     });
@@ -26,6 +26,80 @@ const getAllExpenses = async (req, res) => {
   } catch (error) {
     console.error('GetAllExpenses error:', error);
     return res.status(500).json({ success: false, message: 'Server error listing expenses' });
+  }
+};
+
+const getExpensesHistory = async (req, res) => {
+  try {
+    const { Payout, Vendor } = require('../models');
+
+    const expenses = await Expense.findAll({
+      include: [{ model: User, as: 'addedByUser', attributes: ['id', 'name'] }]
+    });
+
+    const payouts = await Payout.findAll({
+      where: {
+        status: ['paid', 'received']
+      },
+      include: [
+        { model: User, as: 'employee', attributes: ['id', 'name'] },
+        { model: Vendor, as: 'vendor', attributes: ['id', 'name', 'company_name'] }
+      ]
+    });
+
+    const history = [];
+
+    expenses.forEach(exp => {
+      history.push({
+        id: exp.id,
+        source: 'manual_expense',
+        type: exp.expense_type,
+        amount: parseFloat(exp.amount),
+        date: exp.expense_date,
+        payment_mode: exp.payment_mode,
+        notes: exp.notes,
+        recipient: 'Company Expense',
+        reference_id: 'N/A'
+      });
+    });
+
+    payouts.forEach(p => {
+      let recipient = 'Unknown';
+      let amount = 0;
+      if (p.payout_type === 'salary') {
+        recipient = p.employee ? p.employee.name : 'Unknown Employee';
+        amount = parseFloat(p.final_amount || 0);
+      } else if (p.payout_type === 'commission') {
+        recipient = p.employee ? p.employee.name : 'Unknown Employee';
+        amount = parseFloat(p.commission_amount || 0);
+      } else if (p.payout_type === 'vendor_payment') {
+        recipient = p.vendor ? (p.vendor.company_name || p.vendor.name) : 'Unknown Vendor';
+        amount = parseFloat(p.amount_paid || p.b2b_rate || 0);
+      }
+
+      if (p.verified_amount !== null && p.verified_amount !== undefined) {
+        amount = parseFloat(p.verified_amount);
+      }
+
+      history.push({
+        id: p.id,
+        source: 'payout',
+        type: p.payout_type,
+        amount: amount,
+        date: p.verified_date || (p.createdAt ? p.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
+        payment_mode: p.payment_mode || 'N/A',
+        notes: `Payout status: ${p.status}`,
+        recipient: recipient,
+        reference_id: p.transaction_id || 'N/A'
+      });
+    });
+
+    history.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    return res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('GetExpensesHistory error:', error);
+    return res.status(500).json({ success: false, message: 'Server error retrieving expenses history' });
   }
 };
 
@@ -107,6 +181,7 @@ const getExpenseSummary = async (req, res) => {
 
 module.exports = {
   getAllExpenses,
+  getExpensesHistory,
   createExpense,
   getExpenseSummary,
 };

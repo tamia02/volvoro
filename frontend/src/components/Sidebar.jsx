@@ -31,7 +31,7 @@ const Sidebar = () => {
     { path: '/payments', label: 'Payments', icon: CreditCard, permission: 'verify_payment' },
     { path: '/operations', label: 'Operations', icon: Compass, permission: 'view_operations' },
     { path: '/vendors', label: 'Vendors', icon: Truck, permission: 'manage_vendors' },
-    { path: '/commissions', label: 'Commissions', icon: DollarSign, permission: null }, // Visible to all, filtered inside
+    { path: '/payouts', label: 'Payouts', icon: DollarSign, permission: null }, // Visible to all, filtered inside
     { path: '/expenses', label: 'Expenses', icon: DollarSign, permission: 'view_expenses' },
     { path: '/reports', label: 'Reports', icon: BarChart3, permission: 'view_lead_source_reports' },
     { path: '/delete-requests', label: 'Delete Requests', icon: ShieldAlert, permission: 'approve_delete_request' },

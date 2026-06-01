@@ -12,6 +12,7 @@ const Operations = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedOps, setSelectedOps] = useState(null);
+  const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming', 'ongoing', 'completed'
 
   // Modals state
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -104,12 +105,16 @@ const Operations = () => {
   const getTripStatusClass = (status) => {
     const classes = {
       upcoming: 'bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200/50',
-      ongoing: 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/50 animate-soft-pulse',
+      ongoing: 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/50',
       completed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200/50',
       cancelled: 'bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200/50'
     };
     return `text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${classes[status] || 'bg-slate-100 text-slate-700'}`;
   };
+
+  const filteredOps = opsFiles.filter(f => {
+    return f.trip_status === activeTab;
+  });
 
   return (
     <div className="space-y-6">
@@ -119,10 +124,32 @@ const Operations = () => {
         <p className="text-xs font-semibold text-slate-400 mt-0.5">Coordinate hotel checkins, cab timings, coordinator numbers, and itinerary toggles</p>
       </div>
 
+      {/* Tabs */}
+      <div className="flex border-b border-slate-200 dark:border-slate-800">
+        <button
+          onClick={() => setActiveTab('upcoming')}
+          className={`py-3 px-6 text-sm font-semibold border-b-2 transition-all ${activeTab === 'upcoming' ? 'border-brand-500 text-brand-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+        >
+          Upcoming Trips
+        </button>
+        <button
+          onClick={() => setActiveTab('ongoing')}
+          className={`py-3 px-6 text-sm font-semibold border-b-2 transition-all ${activeTab === 'ongoing' ? 'border-brand-500 text-brand-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+        >
+          Ongoing Trips
+        </button>
+        <button
+          onClick={() => setActiveTab('completed')}
+          className={`py-3 px-6 text-sm font-semibold border-b-2 transition-all ${activeTab === 'completed' ? 'border-brand-500 text-brand-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+        >
+          Completed Trips
+        </button>
+      </div>
+
       {/* Grid of operational trips */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {opsFiles.length > 0 ? (
-          opsFiles.map((f) => (
+        {filteredOps.length > 0 ? (
+          filteredOps.map((f) => (
             <div 
               key={f.id} 
               className="glass-card p-6 flex flex-col justify-between gap-4 cursor-pointer"
@@ -153,7 +180,7 @@ const Operations = () => {
           ))
         ) : (
           <div className="col-span-full py-12 text-center text-slate-400 font-medium">
-            No active approved bookings under coordination.
+            No active approved bookings under the "{activeTab}" coordination status.
           </div>
         )}
       </div>

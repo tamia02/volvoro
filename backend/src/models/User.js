@@ -55,6 +55,26 @@ const User = sequelize.define('User', {
     type: DataTypes.UUID,
     allowNull: true,
   },
+  address: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  payout_type: {
+    type: DataTypes.STRING(30),
+    allowNull: false,
+    defaultValue: 'Salary',
+    validate: {
+      isIn: [['Salary', 'Commission Only', 'Hybrid']],
+    },
+  },
+  salary_amount: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+  },
+  commission_percentage: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true,
+  },
 }, {
   tableName: 'users',
   timestamps: true,

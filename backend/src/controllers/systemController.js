@@ -297,7 +297,7 @@ const getDeleteRequests = async (req, res) => {
   try {
     const tickets = await DeleteRequest.findAll({
       where: { status: 'pending' },
-      include: [{ model: User, as: 'requester', attributes: ['id', 'name', 'role'], association: new User.hasMany(DeleteRequest, { foreignKey: 'requested_by', as: 'requestsRaised' }).association }],
+      include: [{ model: User, as: 'requester', attributes: ['id', 'name', 'role'] }],
       order: [['createdAt', 'DESC']]
     });
     return res.json({ success: true, data: tickets });

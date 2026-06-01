@@ -16,6 +16,8 @@ const Expense = require('./Expense');
 const Document = require('./Document');
 const DeleteRequest = require('./DeleteRequest');
 const ActivityLog = require('./ActivityLog');
+const VendorDestination = require('./VendorDestination');
+const Payout = require('./Payout');
 
 // Set up associations
 
@@ -80,6 +82,42 @@ Commission.belongsTo(User, { foreignKey: 'sales_exec_id', as: 'salesExec' });
 User.hasMany(ActivityLog, { foreignKey: 'performed_by', as: 'logs' });
 ActivityLog.belongsTo(User, { foreignKey: 'performed_by', as: 'performer' });
 
+// --- FIX / ADDED RELATIONSHIPS ---
+
+// User <-> Expense
+User.hasMany(Expense, { foreignKey: 'added_by', as: 'expenses' });
+Expense.belongsTo(User, { foreignKey: 'added_by', as: 'addedByUser' });
+
+// User <-> FollowUp (creator)
+User.hasMany(FollowUp, { foreignKey: 'created_by', as: 'followUpsCreated' });
+FollowUp.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
+
+// Lead <-> Payment
+Lead.hasMany(Payment, { foreignKey: 'lead_id', as: 'payments' });
+Payment.belongsTo(Lead, { foreignKey: 'lead_id', as: 'lead' });
+
+// User <-> Booking (creator)
+User.hasMany(Booking, { foreignKey: 'created_by', as: 'createdBookings' });
+Booking.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
+
+// User <-> DeleteRequest
+User.hasMany(DeleteRequest, { foreignKey: 'requested_by', as: 'deleteRequests' });
+DeleteRequest.belongsTo(User, { foreignKey: 'requested_by', as: 'requester' });
+
+// Vendor <-> VendorDestination
+Vendor.hasMany(VendorDestination, { foreignKey: 'vendor_id', as: 'destinationsList' });
+VendorDestination.belongsTo(Vendor, { foreignKey: 'vendor_id', as: 'vendor' });
+
+// Payout relationships
+User.hasMany(Payout, { foreignKey: 'employee_id', as: 'payouts' });
+Payout.belongsTo(User, { foreignKey: 'employee_id', as: 'employee' });
+
+User.hasMany(Payout, { foreignKey: 'verified_by', as: 'verifiedPayouts' });
+Payout.belongsTo(User, { foreignKey: 'verified_by', as: 'verifier' });
+
+Vendor.hasMany(Payout, { foreignKey: 'vendor_id', as: 'payouts' });
+Payout.belongsTo(Vendor, { foreignKey: 'vendor_id', as: 'vendor' });
+
 module.exports = {
   sequelize,
   User,
@@ -97,4 +135,6 @@ module.exports = {
   Document,
   DeleteRequest,
   ActivityLog,
+  VendorDestination,
+  Payout,
 };

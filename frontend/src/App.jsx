@@ -14,12 +14,13 @@ import Bookings from './pages/Bookings';
 import Payments from './pages/Payments';
 import Vendors from './pages/Vendors';
 import Operations from './pages/Operations';
-import Commissions from './pages/Commissions';
 import Expenses from './pages/Expenses';
+import ExpensesHistory from './pages/ExpensesHistory';
 import Reports from './pages/Reports';
 import DeleteRequests from './pages/DeleteRequests';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
+import Payouts from './pages/Payouts';
 
 // Protected Route Guard
 const ProtectedLayout = ({ allowedPermission = null }) => {
@@ -72,14 +73,15 @@ const App = () => {
             {/* Operations */}
             <Route path="/operations" element={<Operations />} />
             
-            {/* Commissions */}
-            <Route path="/commissions" element={<Commissions />} />
+            {/* Payouts */}
+            <Route path="/payouts" element={<Payouts />} />
 
             {/* Admin/Finance - Payments */}
             <Route path="/payments" element={<Payments />} />
             
             {/* Admin/Finance - Expenses */}
             <Route path="/expenses" element={<Expenses />} />
+            <Route path="/expenses/history" element={<ExpensesHistory />} />
             
             {/* Admin/Marketing - Reports */}
             <Route path="/reports" element={<Reports />} />

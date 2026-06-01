@@ -12,5 +12,6 @@ router.post('/', checkPermission('create_user'), userController.createUser);
 router.get('/:id', checkPermission('create_user'), userController.getUserById);
 router.put('/:id', checkPermission('create_user'), userController.updateUser);
 router.patch('/:id/status', checkPermission('deactivate_user'), userController.toggleUserStatus);
+router.delete('/:id', checkPermission('deactivate_user'), userController.deleteUser);
 
 module.exports = router;

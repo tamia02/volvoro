@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import apiClient from '../api/client';
-import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
-import { Plus, Search, Filter, DollarSign, Calendar, FileText, CheckCircle, ArrowRight } from 'lucide-react';
+import { Plus, DollarSign, ArrowRight, TrendingDown } from 'lucide-react';
 
 const Expenses = () => {
-  const { user } = useAuth();
-
   // State
-  const [expenses, setExpenses] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -23,28 +20,24 @@ const Expenses = () => {
     notes: ''
   });
 
-  const fetchExpenses = async () => {
+  const fetchExpensesSummary = async () => {
     try {
       setLoading(true);
       setError('');
-      
-      const res = await apiClient.get('/expenses');
       const sumRes = await apiClient.get('/expenses/summary');
-
-      if (res.data.success && sumRes.data.success) {
-        setExpenses(res.data.data);
+      if (sumRes.data.success) {
         setSummary(sumRes.data.data);
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to fetch expenses');
+      setError('Failed to fetch expenses summary');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchExpenses();
+    fetchExpensesSummary();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -62,24 +55,12 @@ const Expenses = () => {
           payment_mode: 'bank_transfer',
           notes: ''
         });
-        fetchExpenses();
+        fetchExpensesSummary();
+        alert('Expense logged successfully');
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Error adding expense');
     }
-  };
-
-  const getExpenseTypeClass = (type) => {
-    const classes = {
-      meta_ads: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 border-indigo-200/50',
-      staff: 'bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200/50',
-      commission: 'bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 border-purple-200/50',
-      vendor_payment: 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/50',
-      refund: 'bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200/50',
-      software: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/30 dark:text-cyan-400 border-cyan-200/50',
-      misc: 'bg-slate-100 text-slate-700 dark:bg-surface-800 dark:text-slate-400 border-slate-200/50'
-    };
-    return `text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${classes[type] || 'bg-slate-100 text-slate-700'}`;
   };
 
   return (
@@ -88,15 +69,23 @@ const Expenses = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-bold dark:text-white">Business Expenses</h2>
-          <p className="text-xs font-semibold text-slate-400 mt-0.5">Log ad spends, office salaries, software subscriptions, and payouts</p>
+          <p className="text-xs font-semibold text-slate-400 mt-0.5">Log and track operating expenses, ad spends, and cash outflows</p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> Log Expense
-        </button>
+        <div className="flex gap-3">
+          <Link
+            to="/expenses/history"
+            className="px-4 py-2.5 rounded-xl border border-slate-200/50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-surface-800/40 text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2 transition-all"
+          >
+            Outflow History <ArrowRight className="w-4 h-4" />
+          </Link>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="btn-primary flex items-center gap-2 font-bold text-xs"
+          >
+            <Plus className="w-4 h-4" /> Log Expense
+          </button>
+        </div>
       </div>
 
       {/* Summary grid */}
@@ -121,56 +110,23 @@ const Expenses = () => {
         </div>
       )}
 
-      {/* Expenses Table */}
-      <div className="glass-panel overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50 dark:bg-surface-900/40 border-b border-slate-200/50 dark:border-slate-800/50 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                <th className="py-4 px-6">Expense category</th>
-                <th className="py-4 px-6">Payment Mode</th>
-                <th className="py-4 px-6">Date</th>
-                <th className="py-4 px-6">Notes / Description</th>
-                <th className="py-4 px-6">Amount</th>
-                <th className="py-4 px-6">Logged By</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200/40 dark:divide-slate-800/20 text-sm">
-              {expenses.length > 0 ? (
-                expenses.map((e) => (
-                  <tr key={e.id} className="hover:bg-slate-50/30 dark:hover:bg-surface-800/10 transition-colors">
-                    <td className="py-4 px-6">
-                      <span className={getExpenseTypeClass(e.expense_type)}>
-                        {e.expense_type.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-xs font-semibold text-slate-500 capitalize">
-                      {e.payment_mode.replace('_', ' ')}
-                    </td>
-                    <td className="py-4 px-6 text-xs text-slate-600 dark:text-slate-300 font-semibold">
-                      {e.expense_date}
-                    </td>
-                    <td className="py-4 px-6 text-xs text-slate-600 dark:text-slate-400 font-medium">
-                      {e.notes || '-'}
-                    </td>
-                    <td className="py-4 px-6 font-extrabold text-rose-600 dark:text-rose-400">
-                      ₹{parseFloat(e.amount).toLocaleString()}
-                    </td>
-                    <td className="py-4 px-6 text-xs text-slate-400 font-semibold">
-                      {e.addedByUser?.name || 'Manager'}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="py-10 text-center text-slate-400 dark:text-slate-500 font-medium">
-                    No expense entries recorded.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {/* Quick Access Actions */}
+      <div className="glass-panel p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
+            <TrendingDown className="w-6 h-6 animate-pulse" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-sm dark:text-white">Unified Ledger & Outflows</h4>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">Salary payouts, vendor fees, and manual expenses are merged in a standalone ledger.</p>
+          </div>
         </div>
+        <Link
+          to="/expenses/history"
+          className="w-full md:w-auto text-center btn-primary font-bold text-xs bg-indigo-600 hover:bg-indigo-500 border-none px-6"
+        >
+          Access Ledger History
+        </Link>
       </div>
 
       {/* Modal - Add Expense */}
@@ -185,11 +141,8 @@ const Expenses = () => {
                 className="w-full glass-input text-xs"
               >
                 <option value="meta_ads">Meta Ads spend</option>
-                <option value="staff">Staff salaries</option>
-                <option value="commission">Commission payout</option>
-                <option value="vendor_payment">Vendor billing payment</option>
-                <option value="refund">Refund payment</option>
                 <option value="software">Software subscription</option>
+                <option value="refund">Refund payment</option>
                 <option value="misc">Miscellaneous</option>
               </select>
             </div>
@@ -201,6 +154,7 @@ const Expenses = () => {
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 className="w-full glass-input"
+                placeholder="₹"
               />
             </div>
           </div>
@@ -218,14 +172,16 @@ const Expenses = () => {
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Payment Mode</label>
-              <input
-                type="text"
-                required
+              <select
                 value={formData.payment_mode}
                 onChange={(e) => setFormData({ ...formData, payment_mode: e.target.value })}
-                className="w-full glass-input"
-                placeholder="e.g. UPI, Bank Transfer"
-              />
+                className="w-full glass-input text-xs"
+              >
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="upi">UPI</option>
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+              </select>
             </div>
           </div>
 
@@ -235,7 +191,7 @@ const Expenses = () => {
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               className="w-full glass-input h-24 resize-none"
-              placeholder="Provide itemization or vendor confirmation references..."
+              placeholder="Provide itemization or purpose details..."
             />
           </div>
 

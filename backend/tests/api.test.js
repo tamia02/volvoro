@@ -16,6 +16,7 @@ function startServer() {
     serverProcess = exec('node src/server.js', { cwd: __dirname + '/../' });
 
     serverProcess.stdout.on('data', (data) => {
+      console.log('Server stdout:', data.toString());
       if (data.includes('SERVER RUNNING')) {
         resolve();
       }

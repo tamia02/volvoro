@@ -38,6 +38,7 @@ const vendorRoutes = require('./routes/vendors');
 const operationsRoutes = require('./routes/operations');
 const expenseRoutes = require('./routes/expenses');
 const commissionRoutes = require('./routes/commissions');
+const payoutRoutes = require('./routes/payouts');
 const reportRoutes = require('./routes/reports');
 const systemRoutes = require('./routes/system');
 
@@ -53,6 +54,7 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/operations', operationsRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/commissions', commissionRoutes);
+app.use('/api/payouts', payoutRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api', systemRoutes); // Mount system endpoints at /api directly for dashboards
 
