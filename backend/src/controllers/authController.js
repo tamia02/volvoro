@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { Op } = require('sequelize');
 const { User } = require('../models');
 require('dotenv').config();
 
@@ -17,7 +18,7 @@ const login = async (req, res) => {
     // Find user by email or mobile
     const user = await User.findOne({
       where: {
-        [User.sequelize.Sequelize.Op.or]: [
+        [Op.or]: [
           { email: loginIdentifier },
           { mobile: loginIdentifier }
         ]
@@ -141,7 +142,7 @@ const register = async (req, res) => {
     // Check if user already exists (by email or mobile)
     const existingUser = await User.findOne({
       where: {
-        [User.sequelize.Op.or]: [
+        [Op.or]: [
           { email },
           { mobile }
         ]
