@@ -137,6 +137,41 @@ const Bookings = () => {
     }
   };
 
+  const handleVerifyPayment = async (paymentId) => {
+    try {
+      const res = await apiClient.patch(`/payments/${paymentId}/verify`);
+      if (res.data.success) {
+        alert('Payment verified successfully. Booking balance adjusted.');
+        openBookingDetails(selectedBooking.id);
+        fetchBookings();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Verification failed');
+    }
+  };
+
+  const handleRejectPayment = async (paymentId) => {
+    const reason = prompt('Please enter rejection reason:');
+    if (reason === null) return;
+    if (!reason.trim()) {
+      alert('Rejection reason is required.');
+      return;
+    }
+
+    try {
+      const res = await apiClient.patch(`/payments/${paymentId}/reject`, {
+        rejection_reason: reason
+      });
+      if (res.data.success) {
+        alert('Payment verification rejected.');
+        openBookingDetails(selectedBooking.id);
+        fetchBookings();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Rejection failed');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const classes = {
       pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400 border-yellow-200/50',
@@ -289,14 +324,55 @@ const Bookings = () => {
                       <div key={p.id} className="p-3 rounded-xl border border-slate-200/50 dark:border-slate-800/50 bg-slate-50/20 flex items-center justify-between gap-4 text-xs font-semibold">
                         <div>
                           <p className="dark:text-slate-200">Mode: {p.payment_mode.toUpperCase()} • ID: {p.transaction_id}</p>
-                          <span className="text-[10px] text-slate-400">Date: {p.payment_date}</span>
+                          <div className="flex gap-2 items-center text-[10px] mt-0.5">
+                            <span className="text-slate-400">Date: {p.payment_date}</span>
+                            {p.screenshot_url && (
+                              <>
+                                <span className="text-slate-500">•</span>
+                                <a
+                                  href={`http://localhost:5000${p.screenshot_url}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-brand-600 dark:text-violet-400 hover:underline font-bold"
+                                >
+                                  View Receipt
+                                </a>
+                              </>
+                            )}
+                          </div>
                         </div>
                         <div className="text-right">
-                          <span className="text-sm font-extrabold block dark:text-white">₹{parseFloat(p.amount).toLocaleString()}</span>
-                          <span className={`text-[10px] font-bold ${
-                            p.verification_status === 'verified' ? 'text-emerald-500' :
-                            p.verification_status === 'rejected' ? 'text-rose-500' : 'text-amber-500'
-                          }`}>{p.verification_status}</span>
+                          <span className="text-sm font-extrabold block dark:text-white">₹{p.amount ? parseFloat(p.amount).toLocaleString() : '0'}</span>
+                          <div className="flex items-center justify-end gap-2 mt-0.5">
+                            <span className={`text-[10px] font-bold ${
+                              p.verification_status === 'verified' ? 'text-emerald-500' :
+                              p.verification_status === 'rejected' ? 'text-rose-500' : 'text-amber-500'
+                            }`}>{p.verification_status}</span>
+                            {p.verification_status === 'pending' && hasPermission('verify_payment') && (
+                              <div className="flex gap-1.5 ml-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleVerifyPayment(p.id);
+                                  }}
+                                  className="px-2 py-0.5 text-[10px] font-bold bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-500 rounded border border-emerald-500/20 transition-all cursor-pointer"
+                                >
+                                  Verify
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRejectPayment(p.id);
+                                  }}
+                                  className="px-2 py-0.5 text-[10px] font-bold bg-rose-600/20 hover:bg-rose-600/30 text-rose-500 rounded border border-rose-500/20 transition-all cursor-pointer"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))

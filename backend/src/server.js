@@ -188,7 +188,9 @@ async function startServer() {
         // Force reset default user credentials & active status on startup to ensure login access
         user.password_hash = u.password_hash;
         user.role = u.role;
-        user.status = 'active';
+        if (user.status !== 'inactive') {
+          user.status = 'active';
+        }
         await user.save();
         console.log(`Default user account ${u.email} credentials updated to defaults.`);
       }
