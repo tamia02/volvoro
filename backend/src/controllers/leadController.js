@@ -107,13 +107,15 @@ const createLead = async (req, res) => {
       });
     }
 
+    const finalAssignedTo = req.user.role === 'sales_exec' ? req.user.id : (assigned_to || null);
+
     // 2. Create Lead
     const newLead = await Lead.create({
       customer_id: customer.id,
       source,
       campaign_name,
       referral_name,
-      assigned_to: assigned_to || null,
+      assigned_to: finalAssignedTo,
       destination,
       travel_date: travel_date || null,
       pax_count: pax_count || 1,
@@ -128,13 +130,13 @@ const createLead = async (req, res) => {
       created_by: req.user.id,
     });
 
-    // 3. Log lead assignment history if pre-assigned
-    if (assigned_to) {
+    // 3. Log lead assignment history if pre-assigned or auto-assigned
+    if (finalAssignedTo) {
       await LeadAssignment.create({
         lead_id: newLead.id,
-        assigned_to,
+        assigned_to: finalAssignedTo,
         assigned_by: req.user.id,
-        notes: 'Initial assignment upon lead creation',
+        notes: req.user.role === 'sales_exec' ? 'Auto-assigned to creator Sales Executive' : 'Initial assignment upon lead creation',
       });
     }
 
@@ -147,7 +149,7 @@ const createLead = async (req, res) => {
         id: newLead.id,
         customer_id: customer.id,
         destination,
-        assigned_to,
+        assigned_to: finalAssignedTo,
         status: 'new'
       },
       performedBy: req.user.id,

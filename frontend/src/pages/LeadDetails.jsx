@@ -327,7 +327,7 @@ const LeadDetails = () => {
 
         <div className="flex items-center gap-3">
           {/* Booking request triggers */}
-          {['quote_sent', 'follow_up', 'interested', 'booking_request'].includes(lead.status) && (
+          {hasPermission('raise_booking') && !['booked', 'lost', 'fake'].includes(lead.status) && (
             <button
               onClick={() => {
                 setBookingForm({
@@ -391,7 +391,7 @@ const LeadDetails = () => {
                       type="text"
                       required
                       value={editForm.name}
-                      onChange={(e) => setFormData({ ...editForm, name: e.target.value })}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                       className="w-full glass-input"
                     />
                   </div>
