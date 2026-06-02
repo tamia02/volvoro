@@ -103,6 +103,12 @@ const Expenses = () => {
         </div>
 
         <div className="flex gap-3">
+          <Link
+            to="/expenses/history"
+            className="btn-secondary flex items-center gap-2 font-bold text-xs"
+          >
+            <Calendar className="w-4 h-4" /> View Ledger History
+          </Link>
           <button
             onClick={() => setIsModalOpen(true)}
             className="btn-primary flex items-center gap-2 font-bold text-xs"

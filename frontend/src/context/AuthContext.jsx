@@ -31,6 +31,7 @@ const permissionsMap = {
   view_activity_logs: ['admin'],
   raise_delete_request: ['admin', 'sales_exec', 'finance', 'operations', 'marketing'],
   approve_delete_request: ['admin'],
+  manage_payouts: ['admin', 'finance'],
 };
 
 export const AuthProvider = ({ children }) => {
