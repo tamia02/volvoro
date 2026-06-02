@@ -178,12 +178,19 @@ async function startServer() {
     ];
 
     for (const u of defaultUsers) {
-      const [existingUser, created] = await User.findOrCreate({
+      const [user, created] = await User.findOrCreate({
         where: { email: u.email },
         defaults: u
       });
       if (created) {
         console.log(`Default user account ${u.email} seeded successfully.`);
+      } else {
+        // Force reset default user credentials & active status on startup to ensure login access
+        user.password_hash = u.password_hash;
+        user.role = u.role;
+        user.status = 'active';
+        await user.save();
+        console.log(`Default user account ${u.email} credentials updated to defaults.`);
       }
     }
 
