@@ -165,7 +165,7 @@ const Operations = () => {
                 </div>
 
                 <div className="space-y-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 border-t border-slate-200/50 dark:border-slate-800/50 pt-3">
-                  <p>Client: <span className="dark:text-white">{f.booking.customer.name}</span></p>
+                  <p>Client: <span className="dark:text-white">{f.booking?.customer?.name || 'Unknown'}</span></p>
                   <p>Hotel: {f.hotel_name || 'Not finalized'}</p>
                   <p>Cab Driver / Coordinator: {f.coordinator_name || 'TBD'}</p>
                 </div>
@@ -191,8 +191,8 @@ const Operations = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-start border-b border-slate-200/50 dark:border-slate-800/50 pb-4">
               <div>
-                <h3 className="text-sm font-bold dark:text-white">{selectedOps.booking.destination} trip</h3>
-                <span className="text-[10px] text-slate-400">Date: {selectedOps.booking.travel_date} • Client: {selectedOps.booking.customer.name}</span>
+                <h3 className="text-sm font-bold dark:text-white">{selectedOps.booking?.destination} trip</h3>
+                <span className="text-[10px] text-slate-400">Date: {selectedOps.booking?.travel_date} • Client: {selectedOps.booking?.customer?.name || 'Unknown'}</span>
               </div>
               <button
                 onClick={() => {

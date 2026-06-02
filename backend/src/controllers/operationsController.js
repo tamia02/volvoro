@@ -1,4 +1,4 @@
-const { BookingOperation, Booking, Vendor, Commission, User, Lead } = require('../models');
+const { BookingOperation, Booking, Vendor, Commission, User, Lead, Customer } = require('../models');
 const { logActivity } = require('../utils/activityLogger');
 
 const getOperationsBookings = async (req, res) => {
@@ -10,6 +10,7 @@ const getOperationsBookings = async (req, res) => {
           as: 'booking',
           where: { status: 'approved' },
           include: [
+            { model: Customer, as: 'customer', attributes: ['id', 'name', 'primary_mobile', 'city'] },
             { model: User, as: 'creator', attributes: ['id', 'name'] },
             { 
               model: Lead, 
@@ -39,6 +40,7 @@ const getOperationsBookingById = async (req, res) => {
           model: Booking,
           as: 'booking',
           include: [
+            { model: Customer, as: 'customer', attributes: ['id', 'name', 'primary_mobile', 'city'] },
             { model: User, as: 'creator', attributes: ['id', 'name'] },
             { 
               model: Lead, 
