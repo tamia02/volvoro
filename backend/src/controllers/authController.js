@@ -184,10 +184,41 @@ const register = async (req, res) => {
   }
 };
 
+const resetForgottenPassword = async (req, res) => {
+  const { email, mobile, newPassword } = req.body;
+
+  if (!email || !mobile || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Email, mobile, and new password are required' });
+  }
+
+  try {
+    const user = await User.findOne({
+      where: {
+        email,
+        mobile
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'No user account found with this email and mobile number combination' });
+    }
+
+    const saltRounds = 12;
+    user.password_hash = await bcrypt.hash(newPassword, saltRounds);
+    await user.save();
+
+    return res.json({ success: true, message: 'Password reset successfully. You can now log in.' });
+  } catch (error) {
+    console.error('ResetForgottenPassword error:', error);
+    return res.status(500).json({ success: false, message: 'Server error resetting password' });
+  }
+};
+
 module.exports = {
   login,
   logout,
   getMe,
   changePassword,
   register,
+  resetForgottenPassword,
 };

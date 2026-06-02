@@ -7,6 +7,7 @@ const { verifyToken } = require('../middleware/auth');
 router.post('/login', authController.login);
 router.post('/logout', authController.logout);
 router.post('/register', authController.register);
+router.post('/reset-forgotten-password', authController.resetForgottenPassword);
 
 // Protected routes
 router.get('/me', verifyToken, authController.getMe);

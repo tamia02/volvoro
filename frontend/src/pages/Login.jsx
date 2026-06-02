@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import apiClient from '../api/client';
+import Modal from '../components/Modal';
 import { Compass, KeyRound, Phone, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
@@ -12,6 +14,16 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Forgot password states
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetMobile, setResetMobile] = useState('');
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetConfirmPassword, setResetConfirmPassword] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
 
   // Redirect if already logged in
   React.useEffect(() => {
@@ -37,6 +49,53 @@ const Login = () => {
       navigate('/');
     } else {
       setError(result.message || 'Login failed. Please verify credentials.');
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setResetError('');
+    setResetSuccess('');
+
+    if (!resetEmail || !resetMobile || !resetNewPassword || !resetConfirmPassword) {
+      setResetError('All fields are required');
+      return;
+    }
+
+    if (resetNewPassword.length < 6) {
+      setResetError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (resetNewPassword !== resetConfirmPassword) {
+      setResetError('Passwords do not match');
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const res = await apiClient.post('/auth/reset-forgotten-password', {
+        email: resetEmail,
+        mobile: resetMobile,
+        newPassword: resetNewPassword
+      });
+
+      if (res.data.success) {
+        setResetSuccess('Password reset successfully! You can now log in.');
+        // Clear fields
+        setResetEmail('');
+        setResetMobile('');
+        setResetNewPassword('');
+        setResetConfirmPassword('');
+        setTimeout(() => {
+          setIsResetModalOpen(false);
+          setResetSuccess('');
+        }, 3000);
+      }
+    } catch (err) {
+      setResetError(err.response?.data?.message || 'Verification failed. Please check your email and mobile.');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -107,9 +166,19 @@ const Login = () => {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-2">
-              Password
-            </label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsResetModalOpen(true)}
+                className="text-xs text-brand-400 hover:text-brand-300 font-bold transition-colors"
+                disabled={loading}
+              >
+                Forgot Password?
+              </button>
+            </div>
             <div className="relative">
               <KeyRound className="w-4 h-4 text-slate-500 absolute left-4 top-1/2 -translate-y-1/2" />
               <input
@@ -158,6 +227,93 @@ const Login = () => {
           </p>
         </div>
       </div>
+
+      {/* Forgot Password Reset Modal */}
+      <Modal isOpen={isResetModalOpen} onClose={() => { setIsResetModalOpen(false); setResetError(''); setResetSuccess(''); }} title="Reset Forgotten Password">
+        <form onSubmit={handleResetPassword} className="space-y-4">
+          <p className="text-xs font-semibold text-slate-400">
+            Verify your registered Email and Mobile number to reset your workspace password.
+          </p>
+
+          {resetError && (
+            <div className="flex items-start gap-2 bg-rose-950/20 border border-rose-500/20 text-rose-300 p-3 rounded-xl text-xs font-semibold animate-shake">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{resetError}</span>
+            </div>
+          )}
+
+          {resetSuccess && (
+            <div className="flex items-start gap-2 bg-emerald-950/20 border border-emerald-500/20 text-emerald-300 p-3 rounded-xl text-xs font-semibold">
+              <Compass className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400 animate-spin" />
+              <span>{resetSuccess}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Registered Email</label>
+            <input
+              type="email"
+              required
+              placeholder="e.g. admin@volvoro.com"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              className="w-full glass-input text-xs"
+              disabled={resetLoading}
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Registered Mobile Number</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. 9999999991"
+              value={resetMobile}
+              onChange={(e) => setResetMobile(e.target.value)}
+              className="w-full glass-input text-xs"
+              disabled={resetLoading}
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">New Password</label>
+            <input
+              type="password"
+              required
+              placeholder="••••••••••••"
+              value={resetNewPassword}
+              onChange={(e) => setResetNewPassword(e.target.value)}
+              className="w-full glass-input text-xs"
+              disabled={resetLoading}
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Confirm New Password</label>
+            <input
+              type="password"
+              required
+              placeholder="••••••••••••"
+              value={resetConfirmPassword}
+              onChange={(e) => setResetConfirmPassword(e.target.value)}
+              className="w-full glass-input text-xs"
+              disabled={resetLoading}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full btn-primary py-2.5 font-bold text-xs flex items-center justify-center mt-4"
+            disabled={resetLoading}
+          >
+            {resetLoading ? (
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : (
+              'Reset Password & Apply'
+            )}
+          </button>
+        </form>
+      </Modal>
     </div>
   );
 };
