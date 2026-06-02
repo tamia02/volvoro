@@ -166,8 +166,8 @@ const Users = () => {
 
       {/* Grid List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {users.length > 0 ? (
-          users.map((u) => (
+        {users.filter(u => u.status === 'active').length > 0 ? (
+          users.filter(u => u.status === 'active').map((u) => (
             <div key={u.id} className="glass-card p-6 flex flex-col justify-between gap-5 relative overflow-hidden">
               {/* Status Indicator */}
               <div className="absolute right-3 top-3 flex items-center gap-1.5">

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
-import { Plus, Search, Truck, Edit3, Trash2, Globe, DollarSign, Phone, MapPin, Mail } from 'lucide-react';
+import { Plus, Search, Truck, Edit3, Trash2, Globe, DollarSign, Phone, MapPin, Mail, User } from 'lucide-react';
 
 const Vendors = () => {
   const { user, hasPermission } = useAuth();
