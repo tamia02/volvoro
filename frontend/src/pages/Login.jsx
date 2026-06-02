@@ -82,7 +82,7 @@ const Login = () => {
               disabled={loading}
             >
               <option value="sales_exec" className="bg-brand-950 text-white">Sales Executive</option>
-              <option value="admin" className="bg-brand-950 text-white">System Administrator</option>
+              <option value="admin" className="bg-brand-950 text-white">Admin / System Administrator</option>
               <option value="finance" className="bg-brand-950 text-white">Finance Manager</option>
               <option value="operations" className="bg-brand-950 text-white">Operations Coordinator</option>
               <option value="marketing" className="bg-brand-950 text-white">Marketing Coordinator</option>
