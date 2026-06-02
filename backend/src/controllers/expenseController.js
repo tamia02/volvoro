@@ -204,9 +204,44 @@ const getExpenseSummary = async (req, res) => {
   }
 };
 
+const deleteHistoryItems = async (req, res) => {
+  const { items } = req.body;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ success: false, message: 'No items selected for deletion' });
+  }
+
+  try {
+    const { Payout } = require('../models');
+
+    for (const item of items) {
+      if (item.source === 'manual_expense') {
+        await Expense.destroy({ where: { id: item.id } });
+      } else if (item.source === 'payout') {
+        await Payout.destroy({ where: { id: item.id } });
+      }
+    }
+
+    await logActivity({
+      action: 'EXPENSE_HISTORY_BULK_DELETED',
+      entityType: 'Expense',
+      entityId: req.user.id,
+      newValue: { count: items.length },
+      performedBy: req.user.id,
+      roleAtTime: req.user.role,
+    });
+
+    return res.json({ success: true, message: 'Selected records deleted successfully' });
+  } catch (error) {
+    console.error('DeleteHistoryItems error:', error);
+    return res.status(500).json({ success: false, message: 'Server error deleting transaction records' });
+  }
+};
+
 module.exports = {
   getAllExpenses,
   getExpensesHistory,
   createExpense,
   getExpenseSummary,
+  deleteHistoryItems,
 };

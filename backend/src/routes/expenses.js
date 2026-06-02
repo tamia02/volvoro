@@ -8,6 +8,7 @@ router.use(verifyToken);
 
 router.get('/', checkPermission('view_expenses'), expenseController.getAllExpenses);
 router.get('/history', checkPermission('view_expenses'), expenseController.getExpensesHistory);
+router.post('/history/delete', checkPermission('add_expense'), expenseController.deleteHistoryItems);
 router.post('/', checkPermission('add_expense'), expenseController.createExpense);
 router.get('/summary', checkPermission('view_expenses'), expenseController.getExpenseSummary);
 

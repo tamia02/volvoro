@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Filter, DollarSign, Calendar, ArrowLeft, Loader2, ArrowRight } from 'lucide-react';
+import { Filter, DollarSign, Calendar, ArrowLeft, Loader2, ArrowRight, Trash2 } from 'lucide-react';
 
 const ExpensesHistory = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
 
   // State
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedItems, setSelectedItems] = useState([]);
   
   // Filters
   const [sourceFilter, setSourceFilter] = useState(''); // 'manual_expense', 'payout'
@@ -31,6 +32,62 @@ const ExpensesHistory = () => {
       setError('Failed to load transaction ledger history');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleItem = (source, id) => {
+    const key = `${source}:${id}`;
+    setSelectedItems(prev => 
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
+  const handleToggleAll = () => {
+    const filteredKeys = filteredHistory.map(item => `${item.source}:${item.id}`);
+    const allSelected = filteredKeys.every(key => selectedItems.includes(key));
+    
+    if (allSelected) {
+      setSelectedItems(prev => prev.filter(key => !filteredKeys.includes(key)));
+    } else {
+      setSelectedItems(prev => [...new Set([...prev, ...filteredKeys])]);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedItems.length === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedItems.length} selected transaction(s)? This action is permanent.`)) return;
+
+    try {
+      const itemsToDelete = selectedItems.map(key => {
+        const [source, id] = key.split(':');
+        return { id, source };
+      });
+
+      const res = await apiClient.post('/expenses/history/delete', { items: itemsToDelete });
+      if (res.data.success) {
+        setSelectedItems([]);
+        fetchHistory();
+        alert('Selected transaction(s) deleted successfully.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Error deleting transactions');
+    }
+  };
+
+  const handleDeleteSingle = async (source, id) => {
+    if (!window.confirm('Are you sure you want to delete this transaction record? This action is permanent.')) return;
+
+    try {
+      const res = await apiClient.post('/expenses/history/delete', { items: [{ id, source }] });
+      if (res.data.success) {
+        setSelectedItems(prev => prev.filter(key => key !== `${source}:${id}`));
+        fetchHistory();
+        alert('Transaction record deleted successfully.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Error deleting transaction');
     }
   };
 
@@ -75,17 +132,29 @@ const ExpensesHistory = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link
-          to="/expenses"
-          className="p-2 rounded-xl border border-slate-200/50 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-surface-800/40 text-slate-500 transition-all"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h2 className="text-xl font-bold dark:text-white">Outflow Ledger History</h2>
-          <p className="text-xs font-semibold text-slate-400 mt-0.5">Standalone historical record of all manual expenses and verified payouts</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            to="/expenses"
+            className="p-2 rounded-xl border border-slate-200/50 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-surface-800/40 text-slate-500 transition-all"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <h2 className="text-xl font-bold dark:text-white">Outflow Ledger History</h2>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">Standalone historical record of all manual expenses and verified payouts</p>
+          </div>
         </div>
+
+        {hasPermission('add_expense') && selectedItems.length > 0 && (
+          <button
+            onClick={handleDeleteSelected}
+            className="btn-primary bg-rose-600 hover:bg-rose-500 shadow-rose-500/10 border-none flex items-center gap-2 self-start sm:self-auto"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Selected ({selectedItems.length})
+          </button>
+        )}
       </div>
 
       {/* Filter panel */}
@@ -154,6 +223,16 @@ const ExpensesHistory = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-surface-900/40 border-b border-slate-200/50 dark:border-slate-800/50 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  {hasPermission('add_expense') && (
+                    <th className="py-4 px-6 w-12">
+                      <input
+                        type="checkbox"
+                        checked={filteredHistory.length > 0 && filteredHistory.every(item => selectedItems.includes(`${item.source}:${item.id}`))}
+                        onChange={handleToggleAll}
+                        className="rounded border-slate-300 dark:border-slate-800 bg-transparent text-brand-600 focus:ring-brand-500 cursor-pointer w-4 h-4"
+                      />
+                    </th>
+                  )}
                   <th className="py-4 px-6">Transaction Date</th>
                   <th className="py-4 px-6">Purpose/Category</th>
                   <th className="py-4 px-6">Source Module</th>
@@ -161,12 +240,25 @@ const ExpensesHistory = () => {
                   <th className="py-4 px-6">Payment Mode</th>
                   <th className="py-4 px-6">UTR / Reference ID</th>
                   <th className="py-4 px-6 text-right">Outflow Amount</th>
+                  {hasPermission('add_expense') && (
+                    <th className="py-4 px-6 text-right w-20">Actions</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/40 dark:divide-slate-800/20 text-sm">
                 {filteredHistory.length > 0 ? (
                   filteredHistory.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/30 dark:hover:bg-surface-800/10 transition-colors">
+                      {hasPermission('add_expense') && (
+                        <td className="py-4 px-6 w-12" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.includes(`${item.source}:${item.id}`)}
+                            onChange={() => handleToggleItem(item.source, item.id)}
+                            className="rounded border-slate-300 dark:border-slate-800 bg-transparent text-brand-600 focus:ring-brand-500 cursor-pointer w-4 h-4"
+                          />
+                        </td>
+                      )}
                       <td className="py-4 px-6 text-xs font-semibold text-slate-600 dark:text-slate-300">
                         {item.date}
                       </td>
@@ -190,11 +282,22 @@ const ExpensesHistory = () => {
                       <td className="py-4 px-6 font-extrabold text-rose-600 dark:text-rose-400 text-right">
                         ₹{parseFloat(item.amount).toLocaleString()}
                       </td>
+                      {hasPermission('add_expense') && (
+                        <td className="py-4 px-6 text-right" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => handleDeleteSingle(item.source, item.id)}
+                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 dark:hover:bg-rose-500/20 transition-all"
+                            title="Delete record"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="py-10 text-center text-slate-400 dark:text-slate-500 font-medium">
+                    <td colSpan={hasPermission('add_expense') ? 9 : 7} className="py-10 text-center text-slate-400 dark:text-slate-500 font-medium">
                       No outflow records found matching selected filters.
                     </td>
                   </tr>

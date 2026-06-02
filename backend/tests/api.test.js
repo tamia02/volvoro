@@ -252,6 +252,40 @@ async function runTests() {
       throw new Error('Soft-delete failed: Lead is still visible in default queries');
     }
 
+    // 13. Delete Expense/Payout records
+    console.log('Test 13: Verifying Expenses/Payouts ledger deletion...');
+    const createExpRes = await fetch(`${BASE_URL}/expenses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`
+      },
+      body: JSON.stringify({
+        expense_type: 'misc',
+        amount: 500,
+        expense_date: '2026-06-01',
+        payment_mode: 'upi',
+        notes: 'Integration Test Expense'
+      })
+    });
+    const expData = await createExpRes.json();
+    if (!expData.success) throw new Error('Failed to create test expense');
+    const expId = expData.data.id;
+
+    const deleteExpRes = await fetch(`${BASE_URL}/expenses/history/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`
+      },
+      body: JSON.stringify({
+        items: [{ id: expId, source: 'manual_expense' }]
+      })
+    });
+    const deleteExpData = await deleteExpRes.json();
+    if (!deleteExpData.success) throw new Error('Ledger delete request failed: ' + deleteExpData.message);
+    console.log('✔ Ledger deletion verified successfully.');
+
     console.log('\n==================================================');
     console.log('  ALL INTEGRATION SECURITY TESTS PASSED SUCCESSFULLY!');
     console.log('==================================================\n');
