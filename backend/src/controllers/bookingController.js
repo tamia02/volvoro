@@ -234,9 +234,14 @@ const approveBooking = async (req, res) => {
         trip_status: 'upcoming',
         voucher_sent: false,
         itinerary_sent: false,
-        customer_confirmation_sent: false,
+        customer_confirmation_sent: true,
       }
     });
+
+    if (!created) {
+      operation.customer_confirmation_sent = true;
+      await operation.save();
+    }
 
     // Audit log
     await logActivity({

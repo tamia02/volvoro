@@ -215,6 +215,19 @@ async function runTests() {
     });
     const approveData2 = await approveRes2.json();
     if (!approveData2.success) throw new Error('Booking approval failed: ' + approveData2.message);
+    
+    // Fetch operations dispatcher files to check if it's confirmed
+    const opsListRes = await fetch(`${BASE_URL}/operations/bookings`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    const opsListData = await opsListRes.json();
+    const opsFile = opsListData.data.find(op => op.booking_id === createdBookingId);
+    if (!opsFile) throw new Error('Operations dispatcher file was not created');
+    if (opsFile.customer_confirmation_sent !== true) {
+      throw new Error('Verification failed: Booking operation customer_confirmation_sent is not true on approval');
+    }
+    console.log('✔ Verified: Booking operation customer_confirmation_sent set to true automatically.');
     console.log('✔ Booking approved successfully (Status set to booked).');
 
     // 11. Sales Exec raises delete request
