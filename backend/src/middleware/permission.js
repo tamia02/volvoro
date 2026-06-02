@@ -27,7 +27,7 @@ const permissionsMap = {
   raise_delete_request: ['admin', 'sales_exec', 'finance', 'operations', 'marketing'],
   approve_delete_request: ['admin'],
   manage_payouts: ['admin', 'finance'],
-  view_payouts: ['admin', 'finance'],
+  view_payouts: ['admin', 'finance', 'sales_exec'],
 };
 
 const checkPermission = (action) => {

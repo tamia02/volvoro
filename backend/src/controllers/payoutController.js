@@ -10,6 +10,18 @@ const getAllPayouts = async (req, res) => {
     if (payout_type) filter.payout_type = payout_type;
     if (status) filter.status = status;
 
+    // Filter by employee if user is sales_exec (only see their own salary/commission payouts)
+    if (req.user.role === 'sales_exec') {
+      filter.employee_id = req.user.id;
+      if (filter.payout_type) {
+        if (filter.payout_type === 'vendor_payment') {
+          return res.json({ success: true, data: [] });
+        }
+      } else {
+        filter.payout_type = { [Op.in]: ['salary', 'commission'] };
+      }
+    }
+
     const payouts = await Payout.findAll({
       where: filter,
       include: [

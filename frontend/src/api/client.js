@@ -29,7 +29,7 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+    if (error.response && error.response.status === 401) {
       // Clear token and redirect to login if session expires
       localStorage.removeItem('vte_token');
       localStorage.removeItem('vte_user');

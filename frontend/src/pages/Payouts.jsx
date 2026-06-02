@@ -77,6 +77,7 @@ const Payouts = () => {
   };
 
   const fetchUsersAndVendors = async () => {
+    if (!hasPermission('manage_payouts')) return;
     try {
       const [uRes, vRes] = await Promise.all([
         apiClient.get('/users'),
@@ -332,7 +333,7 @@ const Payouts = () => {
         >
           <option value="salary" className="bg-brand-950 text-white">Salary</option>
           <option value="commission" className="bg-brand-950 text-white">Commission Only</option>
-          <option value="vendor_payment" className="bg-brand-950 text-white">Vendor Payment</option>
+          {hasPermission('manage_payouts') && <option value="vendor_payment" className="bg-brand-950 text-white">Vendor Payment</option>}
         </select>
       </div>
 
