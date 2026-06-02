@@ -114,76 +114,77 @@ async function startServer() {
     await sequelize.sync({ alter: false });
     console.log('Database tables verified.');
 
-    // Auto-seed default users if database has no registered accounts
+    // Ensure default users exist in database
     const User = require('./models/User');
     const bcrypt = require('bcrypt');
-    const userCount = await User.count();
-    if (userCount === 0) {
-      console.log('No users found in database. Auto-seeding default accounts...');
-      const saltRounds = 12;
-      const passwordHash = await bcrypt.hash('Volvoro2026!', saltRounds);
-      
-      const defaultUsers = [
-        {
-          name: 'VTE Admin',
-          mobile: '9999999991',
-          email: 'admin@volvoro.com',
-          password_hash: passwordHash,
-          role: 'admin',
-          status: 'active',
-          joining_date: '2026-01-01',
-        },
-        {
-          name: 'Volvoro Google Admin',
-          mobile: '9999999990',
-          email: 'volvorotourexplorer@gmail.com',
-          password_hash: passwordHash,
-          role: 'admin',
-          status: 'active',
-          joining_date: '2026-01-01',
-        },
-        {
-          name: 'VTE Sales Exec',
-          mobile: '9999999992',
-          email: 'sales@volvoro.com',
-          password_hash: passwordHash,
-          role: 'sales_exec',
-          status: 'active',
-          joining_date: '2026-01-01',
-        },
-        {
-          name: 'VTE Finance Manager',
-          mobile: '9999999993',
-          email: 'finance@volvoro.com',
-          password_hash: passwordHash,
-          role: 'finance',
-          status: 'active',
-          joining_date: '2026-01-01',
-        },
-        {
-          name: 'VTE Operations coordinator',
-          mobile: '9999999994',
-          email: 'ops@volvoro.com',
-          password_hash: passwordHash,
-          role: 'operations',
-          status: 'active',
-          joining_date: '2026-01-01',
-        },
-        {
-          name: 'VTE Marketing Coordinator',
-          mobile: '9999999995',
-          email: 'marketing@volvoro.com',
-          password_hash: passwordHash,
-          role: 'marketing',
-          status: 'active',
-          joining_date: '2026-01-01',
-        }
-      ];
-
-      for (const u of defaultUsers) {
-        await User.create(u);
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash('Volvoro2026!', saltRounds);
+    
+    const defaultUsers = [
+      {
+        name: 'VTE Admin',
+        mobile: '9999999991',
+        email: 'admin@volvoro.com',
+        password_hash: passwordHash,
+        role: 'admin',
+        status: 'active',
+        joining_date: '2026-01-01',
+      },
+      {
+        name: 'Volvoro Google Admin',
+        mobile: '9999999990',
+        email: 'volvorotourexplorer@gmail.com',
+        password_hash: passwordHash,
+        role: 'admin',
+        status: 'active',
+        joining_date: '2026-01-01',
+      },
+      {
+        name: 'VTE Sales Exec',
+        mobile: '9999999992',
+        email: 'sales@volvoro.com',
+        password_hash: passwordHash,
+        role: 'sales_exec',
+        status: 'active',
+        joining_date: '2026-01-01',
+      },
+      {
+        name: 'VTE Finance Manager',
+        mobile: '9999999993',
+        email: 'finance@volvoro.com',
+        password_hash: passwordHash,
+        role: 'finance',
+        status: 'active',
+        joining_date: '2026-01-01',
+      },
+      {
+        name: 'VTE Operations coordinator',
+        mobile: '9999999994',
+        email: 'ops@volvoro.com',
+        password_hash: passwordHash,
+        role: 'operations',
+        status: 'active',
+        joining_date: '2026-01-01',
+      },
+      {
+        name: 'VTE Marketing Coordinator',
+        mobile: '9999999995',
+        email: 'marketing@volvoro.com',
+        password_hash: passwordHash,
+        role: 'marketing',
+        status: 'active',
+        joining_date: '2026-01-01',
       }
-      console.log('Default accounts auto-seeded successfully.');
+    ];
+
+    for (const u of defaultUsers) {
+      const [existingUser, created] = await User.findOrCreate({
+        where: { email: u.email },
+        defaults: u
+      });
+      if (created) {
+        console.log(`Default user account ${u.email} seeded successfully.`);
+      }
     }
 
     app.listen(PORT, () => {
