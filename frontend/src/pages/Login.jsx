@@ -212,14 +212,6 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-6 border-t border-slate-800/50 pt-4 text-center">
-          <p className="text-xs text-slate-400">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-brand-400 hover:text-brand-300 font-bold underline transition-colors">
-              Sign Up
-            </Link>
-          </p>
-        </div>
 
         <div className="mt-4 text-center">
           <p className="text-[9px] text-slate-500 dark:text-slate-600 font-semibold tracking-wider">

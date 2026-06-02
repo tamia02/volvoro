@@ -6,7 +6,6 @@ import Navbar from './components/Navbar';
 
 // Page Imports
 import Login from './pages/Login';
-import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import LeadDetails from './pages/LeadDetails';
@@ -57,7 +56,6 @@ const App = () => {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
 
           {/* Protected routes */}
           <Route element={<ProtectedLayout />}>
