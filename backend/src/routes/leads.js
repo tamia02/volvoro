@@ -16,5 +16,6 @@ router.put('/:id', checkPermission('edit_lead'), leadController.updateLead);
 router.patch('/:id/status', checkPermission('update_lead_status'), leadController.updateLeadStatus);
 router.post('/:id/assign', checkPermission('assign_lead'), leadController.assignLead);
 router.post('/:id/delete-request', checkPermission('raise_delete_request'), leadController.raiseDeleteRequest);
+router.delete('/:id', checkPermission('delete_lead'), leadController.deleteLead);
 
 module.exports = router;

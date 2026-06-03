@@ -295,6 +295,20 @@ const LeadDetails = () => {
     }
   };
 
+  const handleDeleteDirect = async () => {
+    if (!window.confirm('Are you sure you want to delete this lead?')) return;
+
+    try {
+      const res = await apiClient.delete(`/leads/${id}`);
+      if (res.data.success) {
+        alert('Lead successfully deleted');
+        navigate('/leads');
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error deleting lead');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -344,12 +358,21 @@ const LeadDetails = () => {
           )}
 
           {/* Delete triggers */}
-          <button
-            onClick={() => setIsDeleteModalOpen(true)}
-            className="btn-secondary py-2 flex items-center gap-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 border-rose-500/20"
-          >
-            <ShieldAlert className="w-4 h-4" /> Request Delete
-          </button>
+          {user.role === 'admin' ? (
+            <button
+              onClick={handleDeleteDirect}
+              className="btn-secondary py-2 flex items-center gap-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 border-rose-500/20"
+            >
+              <ShieldAlert className="w-4 h-4" /> Delete Lead
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="btn-secondary py-2 flex items-center gap-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 border-rose-500/20"
+            >
+              <ShieldAlert className="w-4 h-4" /> Request Delete
+            </button>
+          )}
         </div>
       </div>
 

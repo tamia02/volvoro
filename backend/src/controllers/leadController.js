@@ -475,6 +475,33 @@ const raiseDeleteRequest = async (req, res) => {
   }
 };
 
+const deleteLead = async (req, res) => {
+  try {
+    const lead = await Lead.findOne({ where: { id: req.params.id, is_deleted: false } });
+    if (!lead) {
+      return res.status(404).json({ success: false, message: 'Lead not found or already deleted' });
+    }
+
+    lead.is_deleted = true;
+    await lead.save();
+
+    // Audit Log
+    await logActivity({
+      action: 'LEAD_DELETED',
+      entityType: 'Lead',
+      entityId: lead.id,
+      newValue: { status: 'deleted' },
+      performedBy: req.user.id,
+      roleAtTime: req.user.role,
+    });
+
+    return res.json({ success: true, message: 'Lead successfully deleted' });
+  } catch (error) {
+    console.error('DeleteLead error:', error);
+    return res.status(500).json({ success: false, message: 'Server error deleting lead' });
+  }
+};
+
 module.exports = {
   getAllLeads,
   getLeadById,
@@ -484,4 +511,5 @@ module.exports = {
   assignLead,
   bulkImportLeads,
   raiseDeleteRequest,
+  deleteLead,
 };
